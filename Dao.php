@@ -81,19 +81,16 @@ class Dao {
         return $q->execute(array(':username'=>$username, ':email'=>$email, ':password'=>$password));
     }
 
-    public function getUser($userName, $password) {
+    public function getUser($username, $password) {
         $this->logger->LogInfo("checking if user exists");
         try {
             $conn = $this->getConnection();
-            $userQuery = "SELECT * from clientuser WHERE username=? and password=?";
+            $userQuery = "SELECT * from clientuser WHERE username=:username and password=:password";
             $q = $conn->prepare($userQuery);
-            $q->execute(array($userName, $password));
-            $count = $q->rowCount();
-            if ($count == 1) {
-                return true;
-            } else {
-                return false;
-            }
+            $q->bindParam(":username", $username);
+            $q->bindParam(":password", $password);
+            $q->execute();
+            return $q->fetch() != null;
         } catch (Exception $e) {
             $this->logger->LogFatal("get user failed:" . print_r($e,1));
         }

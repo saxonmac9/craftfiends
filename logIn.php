@@ -14,7 +14,7 @@ require_once 'index.php';
             <?php 
                 if (isset($_SESSION['badlogin'])) {
                     foreach ($_SESSION['badlogin'] as $error)  {
-                        echo "<div class='loginMessages'>{$error}</div>";
+                        echo "<div class='signUpMessages'>{$error}</div>";
                     }
                 } 
             ?> 
