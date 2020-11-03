@@ -7,6 +7,7 @@ require_once 'KLogger.php';
 $dao = new Dao();
 $logger = new KLogger ("log.txt" , KLogger::DEBUG);
 $_SESSION['badblog'] = array();
+$_SESSION['blogid'] = " ";
 
 // Validate blog post
 if (strlen($_POST['blogTitle']) == 0) {
@@ -26,7 +27,7 @@ if (strlen($_POST['blogText']) == 0) {
 
 if (count($_SESSION['badblog']) == 0) {
     $logger->LogInfo("valid blog post");
-    $dao->addBlogPost(2, $_POST['blogTitle'], $_POST['blogText']);
+    $dao->addBlogPost($_SESSION['user'], $_POST['blogTitle'], $_POST['blogText']);
     header($dao->getHost() . "beerBlog.php");
 } else {
     $logger->LogInfo("not a valid blog post");

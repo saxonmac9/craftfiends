@@ -21,7 +21,7 @@ if (strlen($_POST['blogComment']) > 255) {
 
 if (count($_SESSION['badcomment']) == 0) {
     $logger->LogInfo("valid blog comment");
-    $dao->addBlogComment(1, 1, $_POST['blogComment']);
+    $dao->addBlogComment($_SESSION['user'], 1, $_POST['blogComment']);
     header($dao->getHost() . "beerBlog.php");
 } else {
     $logger->LogInfo("not a valid blog comment");

@@ -6,10 +6,10 @@ require_once 'beerObject.php';
 
 class Dao {
     
-    private $host = "127.0.0.1";
-    private $db = "CraftFiendsWebsite";
-    private $user = "root";
-    private $pass = "root";
+    // private $host = "127.0.0.1";
+    // private $db = "CraftFiendsWebsite";
+    // private $user = "root";
+    // private $pass = "root";
     private $logger; 
 
     public function __construct() {
@@ -21,18 +21,18 @@ class Dao {
     }
 
     public function getConnection() {
-        //$db = parse_url("postgres://eldmvfquckyeqw:3e2998e51890b3950407b7dd66cb27a6922765309aa608425ef9bd4a1ea8a8a2@ec2-52-1-95-247.compute-1.amazonaws.com:5432/ddhrv2dk1ln0vu");
+        $db = parse_url("postgres://eldmvfquckyeqw:3e2998e51890b3950407b7dd66cb27a6922765309aa608425ef9bd4a1ea8a8a2@ec2-52-1-95-247.compute-1.amazonaws.com:5432/ddhrv2dk1ln0vu");
         $this->logger->LogDebug("getting a connection\n");
         try {
-            $conn = new PDO("mysql:host={$this->host};dbname={$this->db}", $this->user, $this->pass);
-            // $conn = new PDO("pgsql:" . sprintf(
-            //     "host=%s;port=%s;user=%s;password=%s;dbname=%s",
-            //     $db["host"],
-            //     $db["port"],
-            //     $db["user"],
-            //     $db["pass"],
-            //     ltrim($db["path"], "/")
-            // ));
+            //$conn = new PDO("mysql:host={$this->host};dbname={$this->db}", $this->user, $this->pass);
+            $conn = new PDO("pgsql:" . sprintf(
+                "host=%s;port=%s;user=%s;password=%s;dbname=%s",
+                $db["host"],
+                $db["port"],
+                $db["user"],
+                $db["pass"],
+                ltrim($db["path"], "/")
+            ));
             return $conn;
         } catch (Exception $e) {
             $this->logger->LogFatal("connection failed:" . print_r($e,1));
@@ -90,7 +90,7 @@ class Dao {
             $q->bindParam(":username", $username);
             $q->bindParam(":password", $password);
             $q->execute();
-            return $q->fetch() != null;
+            return $q->fetch();
         } catch (Exception $e) {
             $this->logger->LogFatal("get user failed:" . print_r($e,1));
         }
@@ -189,7 +189,7 @@ class Dao {
         $q->bindParam(":bloggerID", $bloggerID);
         $q->bindParam(":title", $blogTitle);
         $q->bindParam(":post", $blogPost);
-        return $q->execute();
+        $q->execute();
     }
 
     public function getAllBlogComments() {

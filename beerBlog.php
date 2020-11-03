@@ -29,7 +29,7 @@ require_once 'index.php';
             <div>
                 <form id="commentForm" method="POST" action="beerBlog_handler.php">
                     <div><label id="comments">Comment:</label></div>
-                    <div><textarea id="reviewComments" name="blogComment"></textarea></div>
+                    <div><textarea id="reviewComments" name="blogComment">Also, the comments functionality is not available at this point. It will require JavaScript in order to be able to function properly.</textarea></div>
                     <div><input type="submit" id="submitComment" value="Add Comment"></div>
                 </form>
                 <?php 
