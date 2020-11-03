@@ -47,7 +47,7 @@ if (strlen($_POST['review']) == 0) {
 
 if (count($_SESSION['badreview']) == 0) {
     $logger->LogInfo("valid review post");
-    $dao->addReviewPost(1, $_POST['reviewTitle'], $_POST['beerName'], $_POST['reviewLocation'], $_POST['review']);
+    $dao->addReviewPost($_SESSION['user'], $_POST['reviewTitle'], $_POST['beerName'], $_POST['reviewLocation'], $_POST['review']);
     header($dao->getHost() . "reviews.php");
 } else {
     $logger->LogInfo("not a valid review post");
