@@ -46,17 +46,21 @@ class Dao {
         return "Location: http://$host$uri/";
     }
 
-    public function getAdmin() {
+    public function getAdmin($username, $password) {
         $this->logger->LogInfo("getting admin");
         $conn = $this->getConnection();
-        $userQuery = "SELECT adminName, password from AdminUser";
-        return $conn->query($userQuery); 
+        $userQuery = "SELECT adminname, password from adminuser WHERE adminname=:adminname and password=:password";
+        $q = $conn->prepare($userQuery);
+        $q->bindParam(":adminname", $username);
+        $q->bindParam(":password", $password);
+        $q->execute();
+        return $q->fetch() != null; 
     }
 
     public function validateUsername($username) {
         try{
             $conn = $this->getConnection();
-            $userQuery = $conn->prepare("SELECT * from User WHERE username= ?");
+            $userQuery = $conn->prepare("SELECT * from clientuser WHERE username= ?");
             $userQuery->execute(array($username));
             $count = $userQuery->rowCount();
             if ($count != 0) {
@@ -72,7 +76,7 @@ class Dao {
     public function createNewUser($username, $password, $email) {
         $this->logger->LogDebug("create new user");
         $conn = $this->getConnection();
-        $userQuery = "INSERT into User (username, email, password) VALUES (:username, :email, :password)";
+        $userQuery = "INSERT into clientuser (username, email, password) VALUES (:username, :email, :password)";
         $q = $conn->prepare($userQuery);
         return $q->execute(array(':username'=>$username, ':email'=>$email, ':password'=>$password));
     }
@@ -81,7 +85,7 @@ class Dao {
         $this->logger->LogInfo("checking if user exists");
         try {
             $conn = $this->getConnection();
-            $userQuery = "SELECT * from User WHERE username=? and password=?";
+            $userQuery = "SELECT * from clientuser WHERE username=? and password=?";
             $q = $conn->prepare($userQuery);
             $q->execute(array($userName, $password));
             $count = $q->rowCount();
@@ -98,7 +102,7 @@ class Dao {
     public function deleteUser($username) {
         $this->logger->LogInfo("deleting user");
         $conn = $this->getConnection();
-        $deleteQuery = "DELETE from User where username=:username";
+        $deleteQuery = "DELETE from clientuser where username=:username";
         $q = $conn->prepare($deleteQuery);
         $q->bindParam(":username", $username);
         return $q->execute();
@@ -107,7 +111,7 @@ class Dao {
     public function getAllReviewPosts() {
         $this->logger->LogInfo("getting review post");
         $conn = $this->getConnection();
-        $reviewPostQuery = "SELECT title, beer_brewer, location, review, time from Reviews order by time desc";
+        $reviewPostQuery = "SELECT title, beer_brewer, location, review, time from reviews order by time desc";
         $q = $conn->prepare($reviewPostQuery);
         $q->execute();
         return $q->fetchAll();
@@ -116,7 +120,7 @@ class Dao {
     public function addReviewPost($reviewerID, $title, $beerName, $reviewLocation, $reviewPost) {
         $this->logger->LogInfo("adding a review comment [($reviewPost)]");
         $conn = $this->getConnection();
-        $saveQuery = "INSERT into Reviews (reviewerID, title, beer_brewer, location, review) values (:reviewerID, :title, :beer_brewer, :location, :review)";
+        $saveQuery = "INSERT into reviews (reviewerid, title, beer_brewer, location, review) values (:reviewerID, :title, :beer_brewer, :location, :review)";
         $q = $conn->prepare($saveQuery);
         $q->bindParam(":reviewerID", $reviewerID);
         $q->bindParam(":title", $title);
@@ -129,7 +133,7 @@ class Dao {
     public function deleteReviewPost($id) {
         $this->logger->LogInfo("deleting a review post [{$id}]");
         $conn = $this->getConnection();
-        $deleteQuery = "DELETE from Reviews where reviewID = :reviewID";
+        $deleteQuery = "DELETE from reviews where reviewid = :reviewID";
         $q = $conn->prepare($deleteQuery);
         $q->bindParam(":reviewID", $id);
         return $q->execute();
@@ -138,13 +142,13 @@ class Dao {
     public function getAllReviewComments() {
         $this->logger->LogInfo("getting review comment");
         $conn = $this->getConnection();
-        return $conn->query("SELECT review_commentID, userID, reviewID, comment from Review_Comments order by time desc", PDO::FETCH_ASSOC);
+        return $conn->query("SELECT review_commentid, userid, reviewid, comment from review_comments order by time desc");
     }
 
     public function addReviewComment($userID, $reviewID, $reviewComment) {
         $this->logger->LogInfo("adding a review comment [($reviewComment)]");
         $conn = $this->getConnection();
-        $saveQuery = "INSERT into Review_Comments (userID, reviewID, comment) values (:userID, :reviewID, :comment)";
+        $saveQuery = "INSERT into review_comments (userid, reviewid, comment) values (:userID, :reviewID, :comment)";
         $q = $conn->prepare($saveQuery);
         $q->bindParam(":userID", $userID);
         $q->bindParam(":reviewID", $reviewID);
@@ -155,7 +159,7 @@ class Dao {
     public function deleteReviewComment($id) {
         $this->logger->LogInfo("deleting a comment [{$id}]");
         $conn = $this->getConnection();
-        $deleteQuery = "DELETE from Review_Comments where review_commentID = :review_commentID";
+        $deleteQuery = "DELETE from review_comments where review_commentid = :review_commentID";
         $q = $conn->prepare($deleteQuery);
         $q->bindParam(":review_commentID", $id);
         return $q->execute();
@@ -164,7 +168,7 @@ class Dao {
     public function getAllBlogPosts() {
         $this->logger->LogInfo("getting blog post");
         $conn = $this->getConnection();
-        $blogPostQuery = "SELECT title, post, time from Blogs order by time desc";
+        $blogPostQuery = "SELECT title, post, time from blogs order by time desc";
         $q = $conn->prepare($blogPostQuery);
         $q->execute();
         return $q->fetchAll();
@@ -173,7 +177,7 @@ class Dao {
     public function getUserBlogPosts($bloggerID) {
         $this->logger->LogInfo("getting user's blog posts");
         $conn = $this->getConnection();
-        $userBlogQuery = "SELECT title, post, time from Blogs, Users WHERE Blogs.bloggerID = Users.:userID order by time desc ";
+        $userBlogQuery = "SELECT title, post, time from blogs, clientusers WHERE blogs.bloggerid = clientusers.:userid order by time desc ";
         $q = $conn->prepare($userBlogQuery);
         $q->bindParam(":userID", $bloggerID);
         $q->execute();
@@ -183,7 +187,7 @@ class Dao {
     public function addBlogPost($bloggerID, $blogTitle, $blogPost) {
         $this->logger->LogInfo("adding a review comment [($blogPost)]");
         $conn = $this->getConnection();
-        $saveQuery = "INSERT into Blogs (bloggerID, title, post) values (:bloggerID, :title, :post)";
+        $saveQuery = "INSERT into blogs (bloggerid, title, post) values (:bloggerID, :title, :post)";
         $q = $conn->prepare($saveQuery);
         $q->bindParam(":bloggerID", $bloggerID);
         $q->bindParam(":title", $blogTitle);
@@ -194,7 +198,7 @@ class Dao {
     public function getAllBlogComments() {
         $this->logger->LogInfo("getting blog comment");
         $conn = $this->getConnection();
-        $blogCommentsQuery = "SELECT comment from Blog_Comments order by time desc";
+        $blogCommentsQuery = "SELECT comment from blog_comments order by time desc";
         $q = $conn->prepare($blogCommentsQuery);
         $q->execute();
         return $q->fetchAll();
@@ -203,7 +207,7 @@ class Dao {
     public function addBlogComment($userID, $postID, $blogComment) {
         $this->logger->LogInfo("adding a blog comment [($blogComment)]");
         $conn = $this->getConnection();
-        $saveQuery = "INSERT into Blog_Comments (userID, postID, comment) values (:userID, :postID, :comment)";
+        $saveQuery = "INSERT into blog_comments (userid, postid, comment) values (:userID, :postID, :comment)";
         $q = $conn->prepare($saveQuery);
         $q->bindParam(":userID", $userID);
         $q->bindParam(":postID", $postID);
@@ -214,7 +218,7 @@ class Dao {
     public function deleteBlogComment($id) {
         $this->logger->LogInfo("deleting a comment [{$id}]");
         $conn = $this->getConnection();
-        $deleteQuery = "DELETE from Blog_Comments where blog_commentID = :postID";
+        $deleteQuery = "DELETE from blog_comments where blog_commentid = :postID";
         $q = $conn->prepare($deleteQuery);
         $q->bindParam(":postID", $id);
         return $q->execute();
@@ -223,7 +227,7 @@ class Dao {
     public function getBrewery($breweryName) {
         $this->logger->LogInfo("getting brewery");
         $conn = $this->getConnection();
-        $saveQuery = "SELECT breweryID, breweryName from Breweries WHERE breweryName = :breweryName";
+        $saveQuery = "SELECT breweryid, breweryname from breweries WHERE breweryname = :breweryName";
         $q = $conn->prepare($saveQuery);
         $q->bindParam(":breweryName", $breweryName);
         return $q->execute();
@@ -232,12 +236,12 @@ class Dao {
     public function getAllBreweries() {
         $this->logger->LogInfo("getting all breweries");
         $conn = $this->getConnection();
-        $saveQuery = "SELECT * from Breweries order by breweryName";
+        $saveQuery = "SELECT * from breweries order by breweryname";
         $q = $conn->prepare($saveQuery);
         $q->execute();
         $breweriesArray = array();
         foreach ($q->fetchAll() as $result) {
-            $brewery = new BreweryObject($result['breweryID'], $result['breweryName']);
+            $brewery = new BreweryObject($result['breweryid'], $result['breweryname']);
             $brewery->setBeers($this->getAllBeers($brewery->getBreweryID()));
             $breweriesArray[] = $brewery;
         }
@@ -247,7 +251,7 @@ class Dao {
     public function addBrewery($brewery) {
         $this->logger->LogInfo("adding a brewery [{$brewery}]");
         $conn = $this->getConnection();
-        $saveQuery = "INSERT into Breweries (breweryName) values (:breweryName)";
+        $saveQuery = "INSERT into breweries (breweryname) values (:breweryName)";
         $q = $conn->prepare($saveQuery);
         $q->bindParam(":breweryName", $brewery);
         return $q->execute();
@@ -256,7 +260,7 @@ class Dao {
     public function deleteBrewery($id) {
         $this->logger->LogInfo("deleting a brewery [{$id}]");
         $conn = $this->getConnection();
-        $deleteQuery = "DELETE from Breweries where breweryID = :breweryID";
+        $deleteQuery = "DELETE from breweries where breweryid = :breweryID";
         $q = $conn->prepare($deleteQuery);
         $q->bindParam(":breweryID", $id);
         return $q->execute();
@@ -265,19 +269,19 @@ class Dao {
     public function getBeer() {
         $this->logger->LogInfo("getting beer");
         $conn = $this->getConnection();
-        return $conn->query("SELECT brewID, beerName, percentAlcohol from Beers order by time desc", PDO::FETCH_ASSOC);
+        return $conn->query("SELECT brewid, beername, percentalcohol from beers order by time desc");
     }
 
     public function getAllBeers($breweryID) {
         $this->logger->LogInfo("getting all beers for brewery");
         $conn = $this->getConnection();
-        $saveQuery = "SELECT * from Beers WHERE brewID = :breweryID order by beerName";
+        $saveQuery = "SELECT * from beers WHERE brewid = :breweryID order by beername";
         $q = $conn->prepare($saveQuery);
         $q->bindParam(":breweryID", $breweryID);
         $q->execute();
         $beerList = array();
         foreach ($q->fetchAll() as $result) {
-            $beer = new BeerObject($result['beerID'], $result['breweryID'], $result['beerName'], $result['percentAlcohol']);
+            $beer = new BeerObject($result['beerid'], $result['breweryid'], $result['beername'], $result['percentalcohol']);
             $beerList[] = $beer;
         }
         return $beerList;
@@ -286,7 +290,7 @@ class Dao {
     public function addBeer($breweryID, $beer, $abv) {
         $this->logger->LogInfo("adding a beer [{$beer}]");
         $conn = $this->getConnection();
-        $saveQuery = "INSERT into Beers (brewID, beerName, percentAlcohol) values (:brewID, :beerName, :percentAlcohol)";
+        $saveQuery = "INSERT into beers (brewid, beername, percentalcohol) values (:brewID, :beerName, :percentAlcohol)";
         $q = $conn->prepare($saveQuery);
         $q->bindParam(":brewID", $breweryID);
         $q->bindParam(":beerName", $beer);
@@ -297,7 +301,7 @@ class Dao {
     public function deleteBeer($id) {
         $this->logger->LogInfo("deleting a beer [{$id}]");
         $conn = $this->getConnection();
-        $deleteQuery = "DELETE from Beers where beerID = :beerID";
+        $deleteQuery = "DELETE from beers where beerid = :beerID";
         $q = $conn->prepare($deleteQuery);
         $q->bindParam(":beerID", $id);
         return $q->execute();

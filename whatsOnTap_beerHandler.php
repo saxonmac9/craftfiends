@@ -5,7 +5,7 @@ require_once 'KLogger.php';
 
 $dao = new Dao();
 
-$_SESSION['badibeernput'] = array();
+$_SESSION['badbeerinput'] = array();
 
 $logger = $dao->__construct();
 $conn = $dao->getConnection();
