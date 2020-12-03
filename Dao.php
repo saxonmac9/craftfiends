@@ -342,7 +342,7 @@ class Dao {
         $this->logger->LogInfo("Authenticating user");
         if (isset($_SESSION['authenticated']) && !$_SESSION['authenticated'] || !isset($_SESSION['authenticated'])) {
             $this->logger->LogDebug("user authenticated");
-            header($this->getHost() . "login.php");
+            header($this->getHost() . "logIn.php");
         }
     }   
 }
