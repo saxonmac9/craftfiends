@@ -48,7 +48,7 @@ $(function() {
                 data: {"reviewComment": comment, "reviewId": reviewId},
                 dataType: "json",
                 success: function(data) {
-                    alert("ajax success: " + data);
+                    //alert("ajax success: " + data);
                     $(".showComments").prepend("<p class='commentP'>" + comment + "</p>");
                     $("#reviewComments").val('');
                 },
