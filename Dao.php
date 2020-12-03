@@ -3,13 +3,14 @@ require_once 'KLogger.php';
 require_once 'user.php';
 require_once 'breweryObject.php';
 require_once 'beerObject.php';
+require_once 'reviewObject.php';
 
 class Dao {
     
-    // private $host = "127.0.0.1";
-    // private $db = "CraftFiendsWebsite";
-    // private $user = "root";
-    // private $pass = "root";
+    private $host = "127.0.0.1";
+    private $db = "CraftFiendsWebsite";
+    private $user = "root";
+    private $pass = "root";
     private $logger; 
 
     public function __construct() {
@@ -21,18 +22,22 @@ class Dao {
     }
 
     public function getConnection() {
-        $db = parse_url("postgres://eldmvfquckyeqw:3e2998e51890b3950407b7dd66cb27a6922765309aa608425ef9bd4a1ea8a8a2@ec2-52-1-95-247.compute-1.amazonaws.com:5432/ddhrv2dk1ln0vu");
         $this->logger->LogDebug("getting a connection\n");
         try {
-            //$conn = new PDO("mysql:host={$this->host};dbname={$this->db}", $this->user, $this->pass);
-            $conn = new PDO("pgsql:" . sprintf(
-                "host=%s;port=%s;user=%s;password=%s;dbname=%s",
-                $db["host"],
-                $db["port"],
-                $db["user"],
-                $db["pass"],
-                ltrim($db["path"], "/")
-            ));
+            $host = $_SERVER['HTTP_HOST'];
+            if ($host == "localhost") {
+                $conn = new PDO("mysql:host={$this->host};dbname={$this->db}", $this->user, $this->pass);
+            } else {
+                $db = parse_url("postgres://eldmvfquckyeqw:3e2998e51890b3950407b7dd66cb27a6922765309aa608425ef9bd4a1ea8a8a2@ec2-52-1-95-247.compute-1.amazonaws.com:5432/ddhrv2dk1ln0vu");
+                $conn = new PDO("pgsql:" . sprintf(
+                    "host=%s;port=%s;user=%s;password=%s;dbname=%s",
+                    $db["host"],
+                    $db["port"],
+                    $db["user"],
+                    $db["pass"],
+                    ltrim($db["path"], "/")
+                ));
+            }
             return $conn;
         } catch (Exception $e) {
             $this->logger->LogFatal("connection failed:" . print_r($e,1));
@@ -108,10 +113,15 @@ class Dao {
     public function getAllReviewPosts() {
         $this->logger->LogInfo("getting review post");
         $conn = $this->getConnection();
-        $reviewPostQuery = "SELECT title, beer_brewer, location, review, time from reviews order by time desc";
+        $reviewPostQuery = "SELECT reviewid, title, beer_brewer, location, review, time from reviews order by time desc";
         $q = $conn->prepare($reviewPostQuery);
         $q->execute();
-        return $q->fetchAll();
+        $allReviews = array();
+        foreach($q->fetchAll() as $result) {
+            $review = new reviewObject($result['reviewid'], $result['title'], $result['beer_brewer'], $result['location'], $result['review']);
+            $allReviews[] = $review;
+        }
+        return $allReviews;
     }
 
     public function addReviewPost($reviewerID, $title, $beerName, $reviewLocation, $reviewPost) {
@@ -142,7 +152,21 @@ class Dao {
         return $conn->query("SELECT review_commentid, userid, reviewid, comment from review_comments order by time desc");
     }
 
+    public function getComments($reviewID) {
+        $conn = $this->getConnection();
+        $commentQuery = "SELECT comment from review_comments where reviewid = :reviewid order by time desc";
+        $q = $conn->prepare($commentQuery);
+        $q->bindParam("reviewid", $reviewID);
+        $q->execute();
+        $allComments = array();
+        foreach($q->fetchAll() as $result) {
+            $allComments[] = $result['comment'];
+        }
+        return $allComments;
+    } 
+
     public function addReviewComment($userID, $reviewID, $reviewComment) {
+        //print("user ID: " . $userID . ", review ID: " . $reviewID . ", review comment: " . $reviewComment);
         $this->logger->LogInfo("adding a review comment [($reviewComment)]");
         $conn = $this->getConnection();
         $saveQuery = "INSERT into review_comments (userid, reviewid, comment) values (:userID, :reviewID, :comment)";
@@ -150,7 +174,9 @@ class Dao {
         $q->bindParam(":userID", $userID);
         $q->bindParam(":reviewID", $reviewID);
         $q->bindParam(":comment", $reviewComment);
-        return $q->execute();
+        $json = array(); 
+        $json[] = $q->execute();
+        return $json;
     }
 
     public function deleteReviewComment($id) {
@@ -200,6 +226,14 @@ class Dao {
         $q->execute();
         return $q->fetchAll();
     }
+
+    public function getBlogComments($blogID) {
+        $conn = $this->getConnection();
+        $commentQuery = "SELECT comment from blog_comments where commentid = :commentid order by time desc";
+        $q = $conn->prepare($commentQuery);
+        $q->bindParam("commentid", $blogID);
+        return $q->execute();
+    } 
 
     public function addBlogComment($userID, $postID, $blogComment) {
         $this->logger->LogInfo("adding a blog comment [($blogComment)]");

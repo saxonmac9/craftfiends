@@ -69,7 +69,24 @@ h3 {
   margin: 0px;
 }
 
+.reviewsImg {
+  min-height: 250px;
+  max-height: 510px;
+  min-width: 175px;
+  max-width: 385px;
+}
+
+#reviewContent {
+  display: flex;
+  flex-direction: row-reverse;
+  flex: 1 1 auto;
+}
+
 #reviewBox {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  align-content: space-between;
   border: 1px solid black;
   background-color: lightgray;
   font-size: 25px;
@@ -77,6 +94,14 @@ h3 {
   color: black;
   text-shadow: none;
   margin: 5px;
+}
+
+.buttonContainer{
+  display: flex;
+  flex-direction: row;
+  flex: 0 0 auto;
+  align-self: center;
+  align-content: space-between;
 }
 
 #commentForm {
@@ -399,6 +424,22 @@ h3 {
   margin-top: 20px;
   padding: 10 15;
   float: left;
+}
+
+.selectedReview {
+  background-color: yellow;
+}
+
+.reviewContainer {
+  padding-top: 1px;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+.showReview {
+  background-color: white;
+  border: 2px black solid;
 }
 
 #footer, #footer > li {
